@@ -31,7 +31,7 @@ mongoose.connect('mongodb://localhost:27017/blog')
 app.use('/api/posts', postRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api', fileRoutes);
+app.use('/api/file', fileRoutes);
 
 
 
