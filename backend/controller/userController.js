@@ -20,7 +20,7 @@ const loginUser = async (req, res) => {
 };
 
 const userRegister = async (req, res) => {
-    const { userName, email, password } = req.body;
+    const { userName, email, password, role } = req.body;
     try {
         const user = await User.findOne({ email: email });
         if (user) return res.status(200).json("This user already exist");
@@ -28,6 +28,7 @@ const userRegister = async (req, res) => {
         const saveUser = await User.create({
             userName,
             email,
+            role,
             password: passwordHash,
         });
         await saveUser.save();
@@ -37,4 +38,16 @@ const userRegister = async (req, res) => {
     }
 }
 
-module.exports = { loginUser, userRegister }
+const getUserDetails = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json("User not found");
+
+        const { password, ...otherDetails } = user._doc;
+        res.status(200).json(otherDetails);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { loginUser, userRegister, getUserDetails }

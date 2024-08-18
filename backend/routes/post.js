@@ -31,7 +31,7 @@ router.get('/:id', async (req, res) => {
 
 // create a new post
 
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', async (req, res) => {
     const post = new Post({
         title: req.body.title,
         content: req.body.content,
@@ -50,7 +50,7 @@ router.post('/', verifyToken, async (req, res) => {
 
 
 // update an existing post
-router.put('/:id', verifyToken, async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const id = req.params.id
         const post = await Post.findById(id);
@@ -93,7 +93,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
 
 
 // Fetch posts by category ID
-router.get('/category/:categoryId', verifyToken, async (req, res) => {
+router.get('/category/:categoryId', async (req, res) => {
     try {
         const categoryId = req.params.categoryId;
         // Validate Category ID
