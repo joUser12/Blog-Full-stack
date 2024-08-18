@@ -25,4 +25,5 @@ router.post('/', upload.single('file'),  (req, res) => {
     res.send(`File uploaded successfully. Image URL: ${imageUrl}`);
 });
 
+
 module.exports = router;
