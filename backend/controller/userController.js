@@ -6,6 +6,7 @@ const nodemailer = require('nodemailer');
 require('dotenv').config();
 const crypto = require("crypto-js");
 const { mailSender } = require('../middleware/mailSender');
+const { generateToken } = require('../middleware/verifyToken');
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -23,7 +24,8 @@ const loginUser = async (req, res) => {
 
         const isMatch = await user.matchPassword(req.body.password);
         if (!isMatch) return res.status(400).json("wrong password");
-        const token = jwt.sign({ id: user._id, email: user.email }, "collo");
+        // const token = jwt.sign({ id: user._id, email: user.email }, "collo");
+        const token = generateToken(user._id)
         const { password, ...otherDetails } = user._doc;
 
 
@@ -81,7 +83,7 @@ const forgetPassword = async (req, res) => {
     try {
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(200).json({ message: 'User not found', status: false });
         }
 
         // Generate a reset token
@@ -106,14 +108,14 @@ const forgetPassword = async (req, res) => {
                 <p>Please, click the link below to reset your password:</p>
                 <a href="${resetURL}" style="color: #007bff; text-decoration: none; font-weight: bold;">Reset Password</a>`,
         };
-        await mailSender(mailOptions);
-        // transporter.sendMail(mailOptions, (err, response) => {
-        //     if (err) {
-        //         console.error('There was an error: ', err);
-        //     } else {
-        //         res.status(200).json('Recovery email sent');
-        //     }
-        // });
+        // await mailSender(mailOptions);
+        transporter.sendMail(mailOptions, (err, response) => {
+            if (err) {
+                console.error('There was an error: ', err);
+            } else {
+                res.status(200).json({ message: 'Recovery email sent', status: true });
+            }
+        });
 
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -121,11 +123,13 @@ const forgetPassword = async (req, res) => {
 }
 // reset password
 const resetPassword = async (req, res) => {
+    console.log(req.params.token);
     try {
         const user = await User.findOne({
             resetPasswordToken: req.params.token,
             resetPasswordExpires: { $gt: Date.now() },
         });
+
 
         if (!user) {
             return res.status(400).json({ message: 'Invalid or expired token' });
