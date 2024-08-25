@@ -126,10 +126,11 @@ const forgetPassword = async (req, res) => {
 }
 // reset password
 const resetPassword = async (req, res) => {
-    console.log(req.params.token);
+    console.log(req);
+    const { token, password } = req.body;
     try {
         const user = await User.findOne({
-            resetPasswordToken: req.params.token,
+            resetPasswordToken: token,
             resetPasswordExpires: { $gt: Date.now() },
         });
 
@@ -138,7 +139,8 @@ const resetPassword = async (req, res) => {
             return res.status(400).json({ message: 'Invalid or expired token' });
         }
         // Update the password
-        user.password = req.body.password;
+        const passwordHash = await bcrypt.hash(password, 10);
+        user.password = passwordHash;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
         await user.save();
@@ -158,7 +160,7 @@ const resetPassword = async (req, res) => {
 
         await mailSender(mailOptions);
 
-        res.status(200).json({ message: 'Password updated successfully' });
+        res.status(200).json({ message: 'Password updated successfully',status:true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

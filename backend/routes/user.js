@@ -7,8 +7,8 @@ router.post('/register', userRegister)
 router.post('/login', loginUser);
 router.get('/:id', getUserDetails);
 router.post('/forgot-password', forgetPassword)
-router.post('/reset-password/:token', resetPassword)
+router.post('/reset-password', resetPassword)
 router.post("/google-login",googleLogin)
 
 module.exports = router;
-
+ 
