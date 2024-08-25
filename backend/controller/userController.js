@@ -5,9 +5,12 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 const crypto = require("crypto-js");
+const { OAuth2Client } = require("google-auth-library");
+
 const { mailSender } = require('../middleware/mailSender');
 const { generateToken } = require('../middleware/verifyToken');
-
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const client = new OAuth2Client('577529192485-6kn68ejed2mffekm5uio5krdd1il0her.apps.googleusercontent.com');
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -161,6 +164,70 @@ const resetPassword = async (req, res) => {
     }
 }
 
+
+const googleLogin = async (req, res) => {
+    // console.log(req.body);
+    const { token } = req.body;
+    try {
+
+        // Verify the token using Google API
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: CLIENT_ID,
+        });
+        // console.log(ticket);
+
+        const payload = ticket.getPayload();
+        const { sub, email, name, picture } = payload;
+
+        // console.log(payload);
+
+        let user
+        // Check if the user exists in the MongoDB database
+        user = await User.findOne({ googleId: sub });
+
+
+
+        if (!user) {
+            // Create a new user record if not exist
+            user = new User({
+                googleId: sub,
+                email,
+                userName: name,
+                role: 'user',
+            });
+            await user.save();
+        }
+        console.log(user._id);
+        // if (!user) {
+        //     const mailOptions = {
+        //         from: 'joysundaran@gmail.com',
+        //         to: email,
+        //         subject: 'Registration Confirmation',
+        //         html: `
+        //       <h2>Dear ${name},</h2>
+        //       <p>Thank you for registering on blog Platform! We are excited to have you as part of our learning community.</p> `
+        //     };
+
+        //     await mailSender(mailOptions);
+        // }
+
+
+        // // Generate a session token for the authenticated user
+        // const sessionToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
+
+        // // Send the session token to the client
+        // res.json({ success: true, sessionToken });
+
+        let tokenValue = generateToken(user._id)
+        res.status(200).json({ user: { user, token: tokenValue } });
+    } catch (error) {
+        console.error('Error verifying token:', error);
+        res.status(401).json({ success: false, message: 'Invalid token' });
+    }
+
+}
+
 const getUserDetails = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
@@ -173,4 +240,4 @@ const getUserDetails = async (req, res) => {
     }
 };
 
-module.exports = { loginUser, userRegister, getUserDetails, forgetPassword, resetPassword }
+module.exports = { loginUser, userRegister, getUserDetails, forgetPassword, resetPassword, googleLogin }
