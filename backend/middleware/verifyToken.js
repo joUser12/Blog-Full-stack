@@ -14,4 +14,9 @@ const verifyToken = (req, res, next) => {
         return res.status(401).json("You are not authenticated!");
     }
 };
-module.exports = { verifyToken };
+
+const generateToken = id=>{
+    return jwt.sign({id},"anyKey",{expiresIn:"1d"})
+}
+
+module.exports = { verifyToken ,generateToken};
