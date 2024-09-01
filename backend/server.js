@@ -11,6 +11,10 @@ const path = require('path');
 const multer = require('multer');
 const PORT = process.env.PORT || 8000
 
+const passport = require("passport");
+var cookieParser = require('cookie-parser')
+var session = require('express-session')
+
 // middleWare
 app.use(bodyParser.json());
 app.use(cors())
@@ -114,6 +118,35 @@ app.post("/api/upload", (req, res) => {
 });
 
 
+
+
+//__ Third Party Middleware __ //
+app.use(session({
+    resave: false,
+    saveUninitialized: true,
+    secret: 'bla bla bla' 
+   }));
+   
+   app.use(passport.initialize());
+   app.use(passport.session());
+   
+   
+   //__ Social Login Helper __ //
+   require("./src/socialLoginHelper/facebookLogin")(passport)
+   
+   //__ Facebook Stragerty __ //
+   app.get("/auth/facebook", passport.authenticate("facebook", { scope: ["email"] }));
+   
+   app.get("/auth/facebook/callback", passport.authenticate("facebook", {
+     failureRedirect: "/auth/social/failure",
+     failureMessage: true,
+    }),
+    (req, res) => {
+     let baseUrl = "http://localhost:3000";
+     res.redirect(`${baseUrl}?t=${req.user.socialAccessToken}&facebookk=n`);
+    }
+   );
+   
 
 
 
